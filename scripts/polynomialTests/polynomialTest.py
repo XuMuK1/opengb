@@ -37,11 +37,25 @@ print("x=1,y=2; poly3=",poly3(np.array([1,2])))
 
 
 print("__add__ TEST")
-#todo
+print("poly1:", poly1)
+print("poly2:",poly2)
+print("poly3:", poly3)
+print("poly1+poly2",poly1+poly2)
+print("poly1-poly3",poly1-poly3)
+print("poly2-poly3",poly2-poly3)
 
 print("__sub__ TEST")
-#todo
+print("poly1:", poly1)
+print("poly2:",poly2)
+print("poly3:", poly3)
+print("poly1-poly2",poly1-poly2)
+print("poly1-poly3",poly1-poly3)
+print("poly2-poly3",poly2-poly3)
 
 print("__mul__ TEST")
-#todo
-
+print("poly1:", poly1)
+print("poly2:",poly2)
+print("poly3:", poly3)
+print("poly1*poly2",poly1*poly2)
+print("poly1*poly3",poly1*poly3)
+print("poly2*poly3",poly2*poly3)

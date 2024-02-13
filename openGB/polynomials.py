@@ -1,5 +1,5 @@
 import numpy as np
-
+from copy import deepcopy
 
 
 
@@ -46,7 +46,7 @@ class Monomial:
         float coef -- a coefficient (assumed to be just real for now)
         list(str) vars -- variable literals to use (same size as deg)
         '''
-        self.deg = deg
+        self.deg = deg 
         self.coef = coef
         self.order = LexicographicOrder(vars) if order is None else order
         self.vars = vars
@@ -143,7 +143,8 @@ class Monomial:
         '''
         Gives a string representation
         '''
-        return str(self.coef)+"".join([self.vars[i]+ ("^"+str(self.deg[i]) if (self.deg[i])>1 else "")
+        return ("" if self.coefIsOne() else str(self.coef)) + \
+            "".join([self.vars[i]+ ("^"+str(self.deg[i]) if (self.deg[i])>1 else "")
                         for i in np.arange(len(self.vars)) if self.deg[i]>0])
 
     def degree(self):
@@ -151,6 +152,12 @@ class Monomial:
         Returns the degree of the polynomial
         '''
         return np.sum(self.deg)
+    
+    def isZero(self):
+        return np.abs(self.coef)<=1e-15
+    
+    def coefIsOne(self):
+        return np.abs(self.coef-1)<=1e-15
 
 
 
@@ -184,18 +191,41 @@ class Polynomial:
         '''
         * operation, just adding degrees and multiplying coefs
         '''
-        pass
+        #todo: check same vars exception
+        poly2 = Polynomial(monomials= [deepcopy(mon1)*deepcopy(mon2) for mon1 in self.monomials for mon2 in other.monomials],
+                           order=self.order, vars=self.vars)
+        poly2.simplify()
+        return poly2
     def __add__(self,other):
         '''
         + operation, just adding coefficients if the degrees are the same
         '''
-        pass
-    def __add__(self,other):
+        #todo: check same vars exception
+        poly2 = Polynomial(monomials=deepcopy(self.monomials) + deepcopy(other.monomials), order=self.order, vars=self.vars)
+        poly2.simplify()
+        return poly2
+    def __sub__(self,other):
         '''
         - operation, just subtracting coefficients if the degrees are the same
         '''
-        pass
-
+        #todo: check same vars exception
+        poly2 = Polynomial(monomials=deepcopy(self.monomials) + [-deepcopy(mon2) for mon2 in other.monomials], order=self.order, vars=self.vars)
+        poly2.simplify()
+        return poly2
+    
+    def simplify(self):
+        '''
+        Simplifies the polynomial by coupling the same monomials and deleting those with zero coefficients
+        '''
+        dd = {}
+        for mon in self.monomials:
+            key= tuple(mon.deg)#Monomial(deg=mon.deg,coef=1,order=mon.order,vars=mon.vars)
+            if key in dd.keys():
+                dd[key].coef = dd[key].coef + mon.coef
+            else:
+                dd[key] = mon
+        self.monomials = [mon for mon in dd.values() if not mon.isZero()] 
+        
 
     #call as a function
     def __call__(self, x):
@@ -222,7 +252,11 @@ class Polynomial:
         '''
         Gives a string representation
         '''
-        return "".join( [str(self.monomials[0])] + [("+" if self.monomials[i].coef>0 else "") + str(self.monomials[i]) for i in np.arange(1,len(self.monomials))] )
+        if(len(self.monomials)==0):
+            return "0"
+        else:
+            return "".join( ["" if self.monomials[0].isZero() else str(self.monomials[0])] +
+            [(" +" if self.monomials[i].coef>=0 else " ") + str(self.monomials[i]) for i in np.arange(1,len(self.monomials))] )
 
     def degree(self):
         '''
