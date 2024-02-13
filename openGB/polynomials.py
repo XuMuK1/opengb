@@ -128,6 +128,11 @@ class Monomial:
         float[] x -- a batch (...,d) of points
         OR
         float[] x -- a point (d,)
+        
+        Returns
+        float res
+        OR
+        float[] res of shape (<shape>)
         '''
         try:
             if(x.shape[-1]<self.deg.shape[0]):
@@ -141,7 +146,10 @@ class Monomial:
 
     def __str__(self):
         '''
-        Gives a string representation
+        Gives a string representation of the form x^2y
+        
+        Returns
+        str stringRepresentation -- result string
         '''
         return ("" if self.coefIsOne() else str(self.coef)) + \
             "".join([self.vars[i]+ ("^"+str(self.deg[i]) if (self.deg[i])>1 else "")
@@ -149,14 +157,25 @@ class Monomial:
 
     def degree(self):
         '''
-        Returns the degree of the polynomial
+        Returns 
+        int deg -- the degree of the polynomial
         '''
         return np.sum(self.deg)
     
     def isZero(self):
+        '''
+        Checks if it equals 0, needed for simplification
+        
+        Returns
+        True if 0, False otherwise
+        '''
         return np.abs(self.coef)<=1e-15
     
     def coefIsOne(self):
+        '''
+        Checks if the coef equals one (needed for fancy printing)
+        True if coef=1, False otherwise
+        '''
         return np.abs(self.coef-1)<=1e-15
 
 
@@ -250,7 +269,10 @@ class Polynomial:
     #give a fancy string
     def __str__(self):
         '''
-        Gives a string representation
+        Gives a string representation of the form x^2y +3z^3 -5
+        
+        Returns
+        str stringRepresentation -- result string
         '''
         if(len(self.monomials)==0):
             return "0"
@@ -260,7 +282,8 @@ class Polynomial:
 
     def degree(self):
         '''
-        Returns the degree of the polynomial
+        Returns 
+        int deg -- the degree of the polynomial
         '''
         return np.amax([mon.degree() for mon in self.monomials])
 
