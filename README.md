@@ -4,9 +4,11 @@ OpenGB is a toy library for polynomails and Groebner bases. It's an edu project 
 
 ## Project UML
 
+[DrawIO](https://drive.google.com/file/d/1YlBsRUZNbfme26TLNOQw3wUGlWNLx5lu/view?usp=sharing) scheme is available.
+
 ## Dependencies
 
-The list of dependencies can be found in requirements.txt.
+The list of dependencies can be found in requirements.txt. For now it's not much needed.
 
 ## Installation
 
