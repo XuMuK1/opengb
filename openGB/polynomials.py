@@ -1,6 +1,7 @@
 import numpy as np
 from copy import deepcopy
 
+import re
 
 
 class MonomialOrder:
@@ -96,7 +97,7 @@ class Monomial:
         if(self.checkAddCompatibility(other)):
             return Monomial(deg=self.deg, coef=self.coef+other.coef,  order=self.order, vars = self.vars)
         else:
-            return None
+            return Polynomial([deepcopy(self),deepcopy(other)])
     def __sub__(self,other):
         '''
         - operation, just subtracting coefficients if the degrees are the same
@@ -104,7 +105,7 @@ class Monomial:
         if(self.checkAddCompatibility(other)):
             return Monomial(deg=self.deg, coef=self.coef-other.coef,  order=self.order, vars = self.vars)
         else:
-            return None
+            return Polynomial([deepcopy(self),-deepcopy(other)])
     def checkAddCompatibility(self, other):
         '''
         Checks if add can be performed
@@ -151,7 +152,7 @@ class Monomial:
         Returns
         str stringRepresentation -- result string
         '''
-        return ("" if self.coefIsOne() else str(self.coef)) + \
+        return ("" if self.coefIsOne() else "-" if self.coefIsMOne() else str(self.coef)) + \
             "".join([self.vars[i]+ ("^"+str(self.deg[i]) if (self.deg[i])>1 else "")
                         for i in np.arange(len(self.vars)) if self.deg[i]>0])
 
@@ -177,6 +178,12 @@ class Monomial:
         True if coef=1, False otherwise
         '''
         return np.abs(self.coef-1)<=1e-15
+    def coefIsMOne(self):
+        '''
+        Checks if the coef equals one (needed for fancy printing)
+        True if coef=1, False otherwise
+        '''
+        return np.abs(self.coef+1)<=1e-15
 
 
 
@@ -296,3 +303,45 @@ class Polynomial:
 
 
 
+def polyFromExpression(expression, vars, order=None):
+    '''
+    Converts a string (assuming correctness, i.e. no brackets and duplicates like xyx) to a Polynomial object
+
+    Parameters
+    str expression -- expression to convert
+    str[] vars -- one-symbol variables
+
+    Returns
+    Polynomial poly    
+    '''
+    coefGroup = "([0-9.]*)"
+    varGroup = "((["+"".join(vars)+"])(\^([0-9]+)){0,1})"
+    monRE = re.compile( coefGroup+"("+varGroup+"+)|([+-])" )
+    
+    opList = monRE.findall(expression)
+    print(opList)
+    monStructs = [ (i,op[0],op[1]) if (not op[1]=="") else (i,op[-1]) for (i,op) in zip(range(len(opList)),opList)]
+    print(monStructs)
+    monomials = [ constructMonomial(mon, order, vars) if (monStructs[id-1][1]=="+" or id==0) else -constructMonomial(mon, order, vars) 
+                    for (id,mon) in zip(range(len(monStructs)),monStructs) if len(mon)>2]
+    return Polynomial(monomials=monomials, order=order, vars=vars)
+
+def constructMonomial(monStruct, order, vars):
+    '''
+    Aux function to get monomial from parsed re
+    '''
+    varGroup = "((["+"".join(vars)+"])(\^([0-9]+)){0,1})"
+    monLowLevelRE = re.compile(varGroup)
+    monDetails = [(op[1],1 if op[-1]=="" else int(op[-1])) for op in monLowLevelRE.findall(monStruct[-1]) ]
+    varDict = {var: id for (id,var) in zip(range(len(vars)),vars)}
+    deg = np.zeros([len(vars)]).astype("int32")
+    for i in range(len(monDetails)):
+        deg[varDict[monDetails[i][0]]]=monDetails[i][1]
+    if(monStruct[1]==""):
+        coef=1
+    else:
+        try:
+            coef=int(monStruct[1])
+        except:
+            coef=float(monStruct[1])
+    return Monomial(deg=deg, coef=coef, vars=vars, order=order)
