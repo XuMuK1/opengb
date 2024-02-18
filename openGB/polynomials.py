@@ -96,7 +96,7 @@ class Monomial:
         if(self.checkAddCompatibility(other)):
             return Monomial(deg=self.deg, coef=self.coef+other.coef,  order=self.order, vars = self.vars)
         else:
-            return None
+            return Polynomial([deepcopy(self),deepcopy(other)])
     def __sub__(self,other):
         '''
         - operation, just subtracting coefficients if the degrees are the same
@@ -104,7 +104,7 @@ class Monomial:
         if(self.checkAddCompatibility(other)):
             return Monomial(deg=self.deg, coef=self.coef-other.coef,  order=self.order, vars = self.vars)
         else:
-            return None
+            return Polynomial([deepcopy(self),-deepcopy(other)])
     def checkAddCompatibility(self, other):
         '''
         Checks if add can be performed
