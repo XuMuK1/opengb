@@ -230,6 +230,17 @@ class Polynomial:
         poly2 = Polynomial(monomials=deepcopy(self.monomials) + deepcopy(other.monomials), order=self.order, vars=self.vars)
         poly2.simplify()
         return poly2
+    def __radd__(self,other):
+        '''
+        A bit tricky thing for using python sum
+        '''
+        if(not other is Polynomial):
+            ot1 = setConst(str(other),vars=self.vars,order=self.order)
+            return self.__add__(ot1)
+        else:
+            return self.__add__(other)
+        
+        
     def __sub__(self,other):
         '''
         - operation, just subtracting coefficients if the degrees are the same
@@ -300,10 +311,23 @@ class Polynomial:
         '''
         self.monomials = sorted(self.monomials, reverse=True)
         self.sorted = True
+        
+    def inTerm(self):
+        '''
+        Gives the initial term with respect to the chosen order
+        
+        ------------------------------------
+        Returns
+        Monomial mon
+        '''
+        if(not self.sorted):
+            self.sort()
+            self.sorted=True
+        return deepcopy(self.monomials[0])
 
 
 
-def polyFromExpression(expression, vars, const="", order=None):
+def polyFromExpression(expression, vars, const="0", order=None):
     '''
     Converts a string (assuming correctness, i.e. no brackets and duplicates like xyx) to a Polynomial object
 
@@ -320,9 +344,7 @@ def polyFromExpression(expression, vars, const="", order=None):
     monRE = re.compile( coefGroup+"("+varGroup+"+)|([+-])" )
     
     opList = monRE.findall(expression)
-    print(opList)
     monStructs = [ (i,op[0],op[1]) if (not op[1]=="") else (i,op[-1]) for (i,op) in zip(range(len(opList)),opList)]
-    print(monStructs)
     monomials = [ constructMonomial(mon, order, vars) if (monStructs[id-1][1]=="+" or id==0) else -constructMonomial(mon, order, vars) 
                     for (id,mon) in zip(range(len(monStructs)),monStructs) if len(mon)>2]
     return Polynomial(monomials=monomials, order=order, vars=vars) + setConst(const,vars=vars,order=order)
