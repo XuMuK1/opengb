@@ -1,7 +1,23 @@
-import numpy
+import numpy as np
 
 import openGB.polynomials as polys
 
+
+
+class IdealException(Exception):
+    def __init__(self,msg):
+        self.msg=msg
+        
+    def __str__(self):
+        return "IdealException: " + self.msg
+    
+class IdealCoefficinentMismatchException(IdealException):
+    def __init__(self,msg):
+        super(IdealException, self).__init__(msg)
+        
+    def __str__(self):
+        return "IdealCoefficinentMismatchException: " + self.msg
+    
 
 class Ideal:
     '''
@@ -21,11 +37,38 @@ class Ideal:
         '''
         Sorts all monomials in polynomials
         '''
-        pass
+        for i in np.arange(len(self.polynomials)):
+            self.polynomials[i].sort()
+            
+    def getInTerms(self):
+        '''
+        Gives a set of initial terms
+        
+        Returns
+        Monomial[] mons
+        '''
+        return [poly.inTerm() for poly in self.polynomials]
 
     #a fancy-looking string representation
     def __str__(self):
-        pass
+        return "( "+",\n".join([str(poly) for poly in self.polynomials])+" )"
+    
+    def getComb(self,polys):
+        '''
+        Computes a polynomial combination
+        
+        Input
+        Polynomial[] polys -- list of polynomial coefficients
+        
+        Returns
+        Polynomial poly
+        '''
+        if(len(self.polynomials)==len(polys)):
+            polyFinal = sum([polys[i]*self.polynomials[i] for i in np.arange(len(self.polynomials))])
+            polyFinal.simplify()
+        else:
+            raise IdealCoefficinentMismatchException("Wrong number of coffiecients in polynomial combination")
+        return polyFinal
 
     def checkGB(self):
         '''
