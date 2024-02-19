@@ -303,13 +303,14 @@ class Polynomial:
 
 
 
-def polyFromExpression(expression, vars, order=None):
+def polyFromExpression(expression, vars, const="", order=None):
     '''
     Converts a string (assuming correctness, i.e. no brackets and duplicates like xyx) to a Polynomial object
 
     Parameters
     str expression -- expression to convert
     str[] vars -- one-symbol variables
+    str const -- 
 
     Returns
     Polynomial poly    
@@ -324,7 +325,7 @@ def polyFromExpression(expression, vars, order=None):
     print(monStructs)
     monomials = [ constructMonomial(mon, order, vars) if (monStructs[id-1][1]=="+" or id==0) else -constructMonomial(mon, order, vars) 
                     for (id,mon) in zip(range(len(monStructs)),monStructs) if len(mon)>2]
-    return Polynomial(monomials=monomials, order=order, vars=vars)
+    return Polynomial(monomials=monomials, order=order, vars=vars) + setConst(const,vars=vars,order=order)
 
 def constructMonomial(monStruct, order, vars):
     '''
@@ -340,8 +341,18 @@ def constructMonomial(monStruct, order, vars):
     if(monStruct[1]==""):
         coef=1
     else:
-        try:
-            coef=int(monStruct[1])
-        except:
+        if("." in monStruct[1]):
             coef=float(monStruct[1])
+        else:
+            coef=int(monStruct[1])
     return Monomial(deg=deg, coef=coef, vars=vars, order=order)
+
+def setConst(expr, vars, order=None):
+    '''
+    Given a string expression of number, construct a 0-degree monomial (const)
+    '''
+    if("." in expr):
+        coef=float(expr)
+    else:
+        coef=int(expr)
+    return Polynomial(monomials=[Monomial(deg=np.zeros([len(vars)]).astype("int32"), coef=coef, vars=vars, order=order)], vars=vars, order=order)
