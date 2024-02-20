@@ -23,7 +23,6 @@ class LexicographicOrder(MonomialOrder):
         if(a.deg.shape[0] == b.deg.shape[0]):
             dif = a.deg-b.deg
             res=dif[np.where(dif!=0)[0]]
-            #print(np.where(dif!=0)[0])
             if(len(res)==0):
                 return 0#eq
             elif(res[0]>0):
@@ -185,6 +184,13 @@ class Monomial:
         '''
         return np.abs(self.coef+1)<=1e-15
 
+    def toPolynomial(self):
+        '''
+        Gives a Polynomial equivalent of Monomial
+        '''
+        return Polynomial(monomials=[Monomial(deg=self.deg, coef=self.coef,
+                                     order=self.order, vars=self.vars)], order =self.order, vars=self.vars)
+        
 
 
 class Polynomial:
