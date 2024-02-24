@@ -151,7 +151,10 @@ class Monomial:
         Returns
         str stringRepresentation -- result string
         '''
-        return ("" if self.coefIsOne() else "-" if self.coefIsMOne() else str(self.coef)) + \
+        return ("" if self.coefIsOne() and np.any(self.deg>0) 
+                    else "1" if self.coefIsOne() 
+                             else "-" if self.coefIsMOne() 
+                                      else str(self.coef)) + \
             "".join([self.vars[i]+ ("^"+str(self.deg[i]) if (self.deg[i])>1 else "")
                         for i in np.arange(len(self.vars)) if self.deg[i]>0])
 
