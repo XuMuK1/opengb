@@ -96,7 +96,7 @@ class Monomial:
         '''
         if(self.checkAddCompatibility(other)):
             newCoef = (self.coef+other.coef)
-            return Monomial(deg=self.deg, coef=newCoef if (np.abs(newCoef)>1e-12) else 0,  order=self.order, vars = self.vars)
+            return Monomial(deg=self.deg, coef=newCoef,  order=self.order, vars = self.vars)
         else:
             return Polynomial([deepcopy(self),deepcopy(other)])
     def __sub__(self,other):
@@ -105,7 +105,7 @@ class Monomial:
         '''
         if(self.checkAddCompatibility(other)):
             newCoef = (self.coef-other.coef)
-            return Monomial(deg=self.deg, coef=newCoef if (np.abs(newCoef)>1e-12) else 0,  order=self.order, vars = self.vars)
+            return Monomial(deg=self.deg, coef=newCoef,  order=self.order, vars = self.vars)
         else:
             return Polynomial([deepcopy(self),-deepcopy(other)])
     def checkAddCompatibility(self, other):
