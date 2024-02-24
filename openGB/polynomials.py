@@ -3,6 +3,7 @@ from copy import deepcopy
 
 import re
 
+import fractions
 
 class MonomialOrder:
     
@@ -94,7 +95,8 @@ class Monomial:
         + operation, just adding coefficients if the degrees are the same
         '''
         if(self.checkAddCompatibility(other)):
-            return Monomial(deg=self.deg, coef=self.coef+other.coef,  order=self.order, vars = self.vars)
+            newCoef = (self.coef+other.coef)
+            return Monomial(deg=self.deg, coef=newCoef if (np.abs(newCoef)>1e-12) else 0,  order=self.order, vars = self.vars)
         else:
             return Polynomial([deepcopy(self),deepcopy(other)])
     def __sub__(self,other):
@@ -102,7 +104,8 @@ class Monomial:
         - operation, just subtracting coefficients if the degrees are the same
         '''
         if(self.checkAddCompatibility(other)):
-            return Monomial(deg=self.deg, coef=self.coef-other.coef,  order=self.order, vars = self.vars)
+            newCoef = (self.coef-other.coef)
+            return Monomial(deg=self.deg, coef=newCoef if (np.abs(newCoef)>1e-12) else 0,  order=self.order, vars = self.vars)
         else:
             return Polynomial([deepcopy(self),-deepcopy(other)])
     def checkAddCompatibility(self, other):
@@ -390,6 +393,7 @@ def constructMonomial(monStruct, order, vars):
             coef=float(monStruct[1])
         else:
             coef=int(monStruct[1])
+    coef = fractions.Fraction(coef)
     return Monomial(deg=deg, coef=coef, vars=vars, order=order)
 
 def setConst(expr, vars, order=None):
@@ -400,4 +404,5 @@ def setConst(expr, vars, order=None):
         coef=float(expr)
     else:
         coef=int(expr)
+    coef = fractions.Fraction(coef)
     return Polynomial(monomials=[Monomial(deg=np.zeros([len(vars)]).astype("int32"), coef=coef, vars=vars, order=order)], vars=vars, order=order)
