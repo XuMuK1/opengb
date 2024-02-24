@@ -1,5 +1,7 @@
 import numpy as np
 
+from copy import deepcopy
+
 import openGB.polynomials as polys
 
 
@@ -71,11 +73,54 @@ class Ideal:
             raise IdealCoefficinentMismatchException("Wrong number of coffiecients in polynomial combination")
         return polyFinal
 
+    def genSPolys(self,ids):
+        '''
+        Generates a set of S-polynomials Sij with given sets of pairwise indices
+
+        Input
+        ids -- list of tuples (i,j)
+        Returns
+        Polynomial[] spolys
+        '''
+        return [self.getSPoly(self.polynomials[i],self.polynomials[j]) for i,j in ids]
+
+    def getSPoly(self, p1, p2):
+        '''
+        Gives an S-polynomial from two given polynomials
+
+        Returns
+        Polynomial spoly
+        '''
+        in1 = p1.inTerm()
+        in2 = p2.inTerm()
+        degDiff = in1.deg - in2.deg
+        mul1 = -degDiff*(degDiff<=0)
+        mul2 = degDiff*(degDiff>=0)
+        mon1 = polys.Monomial(deg=mul1, coef=in2.coef, order=self.order, vars=self.vars).toPolynomial()
+        mon2 = polys.Monomial(deg=mul2, coef=in1.coef, order=self.order, vars=self.vars).toPolynomial()
+        return mon1*p1 - mon2*p2
+        
+
+    def existsIntersection(self, p1,p2):
+        '''
+        Check if there is an intersection in initial terms of p1 and p2
+
+        Returns
+        bool result
+        '''
+        return not np.all(p1.inTerm().deg - p2.inTerm().deg == 0)
     def checkGB(self):
         '''
         Checks if the set of polynomials forms a GB
         '''
-        pass
+        #gen Spolys
+        ids = [ (i,j) for i in np.arange(len(self.polynomials)) 
+                            for j in np.arange(len(self.polynomials))
+                            if (i>j and 
+                                self.existsIntersection(self.polynomials[i], self.polynomials[j]))]
+        print(ids)
+        spolysRedResult = np.all([ self.baseReduce(sp).isZero() for sp in self.genSPolys(ids) ])
+        return spolysRedResult
 
     def computeGB(self):
         '''
@@ -85,26 +130,42 @@ class Ideal:
         pass
     
     
-    def baseReduce(self, p1):
+    def baseReduce(self, p1, debugVerbose=False):
         '''
         Reduces with self.polynomials as much as possible
         
         Input
         Polynomial p1 -- what to reduce
+        bool debugVerbose -- whether to print reduction steps
         
         Returns
         Polynomial poly
         '''
         while(True):
             for poly in self.polynomials:
-                p1,suc = self.reduce(p1,poly)
+                p1,suc = self.reduce(p1,poly,debugVerbose=debugVerbose)
                 if(suc):
                     break
             else:
                 return p1
             
-    
-    def reduce(self, p1, p2):
+    def getReductionMonomial(self,mon1,in2):
+        '''
+        Gives a reduction monomial
+
+        Input
+        Monomial mon1 -- monomial to reduce
+        Monomial in2 -- monomial to reduce with
+        MonomialOrder order -- order to pass
+        str[] vars -- list of variables to pass
+        
+        Returns
+        Monomial redMon
+        '''
+        return polys.Monomial(deg=mon1.deg-in2.deg, 
+                                     coef=mon1.coef/in2.coef,
+                                     order=self.order, vars=self.vars).toPolynomial()
+    def reduce(self, p1, p2, debugVerbose=False):
         '''
         Reduces p1 with p2 as much as possible
         
@@ -116,17 +177,24 @@ class Ideal:
         Polynomial poly
         '''
         in2 = p2.inTerm()
+        p1copy = deepcopy(p1)# just in case
+        
         success=False
-        while(True):
-            try:
-                firstDiv = np.where([np.all((mon.deg-in2.deg)>=0) for mon in p1.monomials])[0][0]
-            except:
-                break
-            polyMon = polys.Monomial(deg=p1.monomials[firstDiv].deg-in2.deg, coef=p1.monomials[firstDiv].coef/in2.coef,
-                                     order=self.order, vars=self.vars).toPolynomial()
-            p1 = p1 - polyMon*p2
+        firstDiv = np.where([np.all((mon.deg-in2.deg)>=0) for mon in p1copy.monomials])[0]
+        while(firstDiv.shape[0]>=1):
+            firstDiv = firstDiv[0]
+            polyMon = self.getReductionMonomial(p1copy.monomials[firstDiv],in2)
+
+            if(debugVerbose):
+                print("RED", p1copy)
+            p1copy = p1copy - polyMon*p2
+            if(debugVerbose):
+                print("RED by", polyMon,",", p2,",", p1copy)
+
             success=True
-        return p1, success
+            firstDiv = np.where([np.all((mon.deg-in2.deg)>=0) for mon in p1copy.monomials])[0]
+            
+        return p1copy, success
     
         
             

@@ -330,6 +330,20 @@ class Polynomial:
             self.sort()
             self.sorted=True
         return deepcopy(self.monomials[0])
+    
+    def isZero(self):
+        '''
+        Checks if a polynomial is zero
+
+        Returns
+        bool result
+        '''
+        if(len(self.monomials)==0):
+            return True
+        elif (np.all([mon.isZero() for mon in self.monomials])):
+            return True
+        else:
+            return False
 
 
 
