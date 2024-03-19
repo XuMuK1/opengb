@@ -1,6 +1,7 @@
 import numpy as np
 
 from copy import deepcopy
+import random
 
 import openGB.polynomials as polys
 
@@ -118,16 +119,53 @@ class Ideal:
                             for j in np.arange(len(self.polynomials))
                             if (i>j and 
                                 self.existsIntersection(self.polynomials[i], self.polynomials[j]))]
-        print(ids)
         spolysRedResult = np.all([ self.baseReduce(sp).isZero() for sp in self.genSPolys(ids) ])
         return spolysRedResult
 
-    def computeGB(self):
+    def computeGB(self, debugVerbose=False, minGB=True):
         '''
         Computes a Groebner Basis using Buchberger algorithm
+
+        Input
+        bool debugVerbose -- whether to output interim computations
+        bool minGB -- whether to output minimal GB
         '''
-        #S-pairs etc
-        pass
+        #start index
+        indices = [ (i,j) for i in np.arange(len(self.polynomials)) 
+                            for j in np.arange(len(self.polynomials))
+                            if (i>j and 
+                                self.existsIntersection(self.polynomials[i], self.polynomials[j]))]
+        random.shuffle(indices)#hoping for the best
+
+        while( len(indices)>0 ):
+            i,j = indices.pop()
+            sPoly=self.getSPoly(self.polynomials[i],self.polynomials[j])
+            if(debugVerbose):
+                print(f"Reducing S({i},{j})= {sPoly}")
+                print("With")
+                print(self)
+            resid = self.baseReduce(sPoly,debugVerbose=debugVerbose)
+
+            if( not resid.isZero()):
+                #append new element to the base
+                self.polynomials = self.polynomials + [resid]
+                #append new spolys
+                indices = indices + [ (i,len(self.polynomials)-1) for i in np.arange(len(self.polynomials)-1) 
+                            if (self.existsIntersection(self.polynomials[i], self.polynomials[-1]))]
+                random.shuffle(indices)#hoping for the best
+        
+        if(minGB):
+            self.setMinGB()
+
+    def setMinGB(self):
+        '''
+        Transforms GB into minimial GB
+        '''    
+        def checkDivisibility(mon1,mon2):
+            return np.all(mon1.deg-mon2.deg<=0)#mon1 | mon2
+        self.polynomials = [poly for poly in self.polynomials 
+                                if np.all([not checkDivisibility(p.inTerm(),poly.inTerm()) 
+                                        for p in self.polynomials if not (p-poly).isZero()])]
     
     
     def baseReduce(self, p1, debugVerbose=False):
