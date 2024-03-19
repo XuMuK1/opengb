@@ -5,6 +5,9 @@ import re
 
 import fractions
 
+import galois
+
+
 class MonomialOrder:
     
     def __init__(self):
@@ -13,7 +16,9 @@ class MonomialOrder:
     def compare(self, a, b):
         raise NotImplementedError
         
-        
+
+
+
 class LexicographicOrder(MonomialOrder):
     
     def __init__(self, vars):
@@ -39,7 +44,7 @@ class Monomial:
     '''
         A monomial x^deg with deg represented as an integer array
     '''
-    def __init__(self, deg, coef, order=None, vars = "xyzwtprsuv"):
+    def __init__(self, deg, coef, order=None, vars = "xyzwtprsuv", coefField=None):
         '''
         Parameters
 
@@ -49,6 +54,7 @@ class Monomial:
         '''
         self.deg = deg 
         self.coef = coef
+        self.coefField = "fraction" if coefField is None else coefField
         self.order = LexicographicOrder(vars) if order is None else order
         self.vars = vars
 
@@ -183,13 +189,13 @@ class Monomial:
         Checks if the coef equals one (needed for fancy printing)
         True if coef=1, False otherwise
         '''
-        return np.abs(self.coef-1)<=1e-15
+        return self.coef==1
     def coefIsMOne(self):
         '''
         Checks if the coef equals one (needed for fancy printing)
         True if coef=1, False otherwise
         '''
-        return np.abs(self.coef+1)<=1e-15
+        return self.coef==-1
 
     def toPolynomial(self):
         '''
@@ -354,7 +360,40 @@ class Polynomial:
 
 
 
-def polyFromExpression(expression, vars, const="0", order=None):
+
+
+
+def fractionConstructor(expr, const=False):
+    if(const):
+        if("." in expr):
+            coef=float(expr)
+        else:
+            coef=int(expr)
+        coef = fractions.Fraction(coef)
+    else:
+        if(expr==""):
+            coef=1
+        else:
+            if("." in expr):
+                coef=float(expr)
+            else:
+                coef=int(expr)
+        coef = fractions.Fraction(coef)
+        
+    return coef
+
+def GFpConstructor(expr,const=False,GF=None):
+    if("." in expr or GF is None):
+        raise ValueError
+    if(expr==""):
+        coef=1
+    else:
+        coef = int(expr)
+    coef = GF(coef)
+    return coef
+
+
+def polyFromExpression(expression, vars, const="0", order=None,coefConstructor=fractionConstructor,**kwargs):
     '''
     Converts a string (assuming correctness, i.e. no brackets and duplicates like xyx) to a Polynomial object
 
@@ -372,11 +411,12 @@ def polyFromExpression(expression, vars, const="0", order=None):
     
     opList = monRE.findall(expression)
     monStructs = [ (i,op[0],op[1]) if (not op[1]=="") else (i,op[-1]) for (i,op) in zip(range(len(opList)),opList)]
-    monomials = [ constructMonomial(mon, order, vars) if (monStructs[id-1][1]=="+" or id==0) else -constructMonomial(mon, order, vars) 
-                    for (id,mon) in zip(range(len(monStructs)),monStructs) if len(mon)>2]
-    return Polynomial(monomials=monomials, order=order, vars=vars) + setConst(const,vars=vars,order=order)
+    monomials = [ constructMonomial(mon, order, vars, coefConstructor=coefConstructor,**kwargs) if (monStructs[id-1][1]=="+" or id==0) else -constructMonomial(mon, order, vars, coefConstructor=coefConstructor, **kwargs) \
+                    for (id,mon) in zip(range(len(monStructs)),monStructs) if len(mon)>2 ]
+    return Polynomial(monomials=monomials, order=order, vars=vars) + setConst(const,vars=vars,order=order, coefConstructor=coefConstructor, **kwargs)
 
-def constructMonomial(monStruct, order, vars):
+
+def constructMonomial(monStruct, order, vars, coefConstructor=fractionConstructor, **kwargs):
     '''
     Aux function to get monomial from parsed re
     '''
@@ -387,23 +427,17 @@ def constructMonomial(monStruct, order, vars):
     deg = np.zeros([len(vars)]).astype("int32")
     for i in range(len(monDetails)):
         deg[varDict[monDetails[i][0]]]=monDetails[i][1]
-    if(monStruct[1]==""):
-        coef=1
-    else:
-        if("." in monStruct[1]):
-            coef=float(monStruct[1])
-        else:
-            coef=int(monStruct[1])
-    coef = fractions.Fraction(coef)
+    coef = coefConstructor(monStruct[1],**kwargs)
     return Monomial(deg=deg, coef=coef, vars=vars, order=order)
 
-def setConst(expr, vars, order=None):
+def setConst(expr, vars, order=None, coefConstructor=fractionConstructor, **kwargs):
     '''
     Given a string expression of number, construct a 0-degree monomial (const)
     '''
-    if("." in expr):
-        coef=float(expr)
-    else:
-        coef=int(expr)
-    coef = fractions.Fraction(coef)
+    coef = coefConstructor(expr,const=True,**kwargs)
     return Polynomial(monomials=[Monomial(deg=np.zeros([len(vars)]).astype("int32"), coef=coef, vars=vars, order=order)], vars=vars, order=order)
+
+
+
+    
+

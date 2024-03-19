@@ -109,7 +109,7 @@ class Ideal:
         Returns
         bool result
         '''
-        return not np.all(p1.inTerm().deg - p2.inTerm().deg == 0)
+        return not (np.sum(np.abs(p1.inTerm().deg - p2.inTerm().deg )) == np.sum(np.abs(p1.inTerm().deg)) + np.sum(np.abs(p2.inTerm().deg)) )
     def checkGB(self):
         '''
         Checks if the set of polynomials forms a GB
@@ -163,9 +163,18 @@ class Ideal:
         '''    
         def checkDivisibility(mon1,mon2):
             return np.all(mon1.deg-mon2.deg<=0)#mon1 | mon2
-        self.polynomials = [poly for poly in self.polynomials 
-                                if np.all([not checkDivisibility(p.inTerm(),poly.inTerm()) 
-                                        for p in self.polynomials if not (p-poly).isZero()])]
+        i=0
+        changed=True
+        while(changed):
+            changed=False
+            for i in np.arange(len(self.polynomials)):
+                poly = self.polynomials[i]
+                if(np.any([checkDivisibility(p.inTerm(),poly.inTerm()) 
+                                        for p in self.polynomials if not (p-poly).isZero()])):
+                    self.polynomials = self.polynomials[:i] + self.polynomials[(i+1):]
+                    changed=True
+                    break
+            
     
     
     def baseReduce(self, p1, debugVerbose=False):
